@@ -1,0 +1,100 @@
+// Lumora: Materio surfaces with Sneat information hierarchy.
+.page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-block-end: 1.75rem;
+}
+
+.v-card {
+  border: 1px solid rgba(var(--v-border-color), 0.07);
+  border-radius: 14px !important;
+}
+
+.layout-vertical-nav .nav-link > a:focus-visible,
+.layout-vertical-nav .nav-group > div:focus-visible {
+  outline: 2px solid rgb(var(--v-theme-primary));
+  outline-offset: 2px;
+}
+
+// Keep the icon rail compact on desktop without changing the mobile drawer.
+.form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  > div { display: flex; justify-content: space-between; gap: 20px; }
+  dt { color: rgba(var(--v-theme-on-surface), .65); }
+  dd { text-align: end; overflow-wrap: anywhere; }
+}
+.cart-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-block: 20px;
+  + .cart-line { border-block-start: 1px solid rgba(var(--v-border-color), .1); }
+}
+.review-line {
+  padding-block: 18px;
+  + .review-line { border-block-start: 1px solid rgba(var(--v-border-color), .1); }
+}
+.v-card-subtitle { white-space: normal; }
+.v-btn { text-transform: none !important; }
+button:focus-visible, a:focus-visible { outline: 2px solid rgb(var(--v-theme-primary)); outline-offset: 3px; }
+.v-card-actions { flex-wrap: wrap; gap: 8px; }
+@media (pointer: coarse) { .v-btn--icon { min-inline-size: 44px; min-block-size: 44px; } }
+
+@media (min-width: 1280px) {
+  .layout-wrapper.layout-vertical-nav-collapsed .layout-vertical-nav {
+    .nav-header {
+      justify-content: center;
+      padding-inline: 0;
+    }
+
+    .nav-header .app-logo {
+      margin-inline: 0;
+      transform: none !important;
+    }
+
+    .app-logo h1,
+    .nav-item-title,
+    .nav-item-badge,
+    .nav-group-arrow,
+    .nav-section-title .title-wrapper {
+      display: none;
+    }
+
+    .nav-section-title {
+      block-size: 16px;
+      margin-block: 8px;
+      padding: 0;
+    }
+
+    .nav-link > a,
+    .nav-group > .nav-group-label {
+      justify-content: center;
+      border-radius: 12px;
+      margin-inline: 12px;
+      padding-inline: 0;
+    }
+
+    .nav-item-icon {
+      margin-inline: 0;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

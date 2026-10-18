@@ -1,0 +1,30 @@
+<script setup lang="ts">
+import { productImage } from "@/utils/media"
+import { useDemoStore, money } from '@/stores/demo'
+const store = useDemoStore(); const search = ref(''); const page = ref(1); const sort = ref('featured')
+const filtersOpen = ref(false); const category = ref<number | null>(null); const available = ref(false); const maxPrice = ref<number | null>(null)
+const draft = reactive({ category: null as number | null, available: false, maxPrice: null as number | null })
+const filterCount = computed(() => Number(!!category.value) + Number(available.value) + Number(maxPrice.value !== null && String(maxPrice.value) !== ''))
+const filtered = computed(() => {
+  const result = store.products.filter(p => p.status === 'Active' && (!search.value?.trim() || `${p.name} ${p.description}`.toLowerCase().includes(search.value.trim().toLowerCase())) && (!category.value || p.categoryId === category.value) && (!available.value || p.stock > 0) && (maxPrice.value === null || String(maxPrice.value) === '' || p.price <= Number(maxPrice.value)))
+  return sort.value === 'price-asc' ? result.sort((a, b) => a.price - b.price) : sort.value === 'price-desc' ? result.sort((a, b) => b.price - a.price) : result
+})
+const pages = computed(() => Math.max(1, Math.ceil(filtered.value.length / 6)))
+const visible = computed(() => filtered.value.slice((page.value - 1) * 6, page.value * 6))
+watch([search, category, available, maxPrice, sort], () => { page.value = 1 })
+function openFilters() { Object.assign(draft, { category: category.value, available: available.value, maxPrice: maxPrice.value }); filtersOpen.value = true }
+function apply() { category.value = draft.category; available.value = draft.available; maxPrice.value = draft.maxPrice; filtersOpen.value = false }
+function reset() { search.value = ''; category.value = null; available.value = false; maxPrice.value = null }
+const snack = ref('')
+const inCart = (id: number) => store.data.cart.find(line => line.productId === id)?.quantity ?? 0
+function add(id: number) { snack.value = store.addToCart(id) ? 'Produk berhasil ditambahkan ke keranjang.' : 'Seluruh stok tersedia sudah ada di keranjang Anda.' }
+</script>
+<template>
+  <PageHeader :title="store.data.settings.name" eyebrow="COLLECTION" :description="store.data.settings.description"><VBtn to="/shop/cart" variant="outlined" prepend-icon="ri-shopping-cart-line">Keranjang ({{ store.cartCount }})</VBtn></PageHeader>
+  <VCard class="mb-6"><VCardText class="d-flex flex-wrap align-center gap-3"><VTextField v-model="search" label="Cari produk" prepend-inner-icon="ri-search-line" clearable class="flex-grow-1" style="min-inline-size: 180px" /><VBtn variant="outlined" prepend-icon="ri-filter-3-line" @click="openFilters">Filter {{ filterCount ? `(${filterCount})` : '' }}</VBtn><VSelect v-model="sort" label="Urutkan produk" :items="[{ title: 'Rekomendasi', value: 'featured' }, { title: 'Harga terendah', value: 'price-asc' }, { title: 'Harga tertinggi', value: 'price-desc' }]" style="flex: 0 1 200px" /><VBtn v-if="filterCount || search" variant="text" @click="reset">Hapus pilihan</VBtn></VCardText><div v-if="filterCount" class="px-5 pb-4 d-flex flex-wrap gap-2"><VChip v-if="category" closable size="small" color="primary" @click:close="category = null">Kategori: {{ store.data.categories.find(c => c.id === category)?.name }}</VChip><VChip v-if="available" closable size="small" color="primary" @click:close="available = false">Stok tersedia</VChip><VChip v-if="maxPrice !== null && String(maxPrice) !== ''" closable size="small" color="primary" @click:close="maxPrice = null">Maks. {{ money(Number(maxPrice)) }}</VChip></div></VCard>
+  <p class="text-body-2 text-medium-emphasis mb-4" role="status">{{ filtered.length }} produk ditemukan</p>
+  <VRow><VCol v-for="product in visible" :key="product.id" cols="12" sm="6" lg="4"><VCard class="h-100"><RouterLink :to="`/shop/products/${product.id}`" :aria-label="`View ${product.name}`"><ProductArt :icon="product.icon" :image="productImage(product)" :alt="product.name" /></RouterLink><VCardText><p class="text-caption mb-1">{{ store.data.categories.find(c => c.id === product.categoryId)?.name }}</p><RouterLink :to="`/shop/products/${product.id}`" class="text-h6">{{ product.name }}</RouterLink><div class="d-flex align-center justify-space-between flex-wrap mt-4 gap-2"><span class="font-weight-medium">{{ money(product.price) }}</span><VBtn size="small" :disabled="!product.stock || inCart(product.id) >= product.stock" variant="tonal" prepend-icon="ri-add-line" @click="add(product.id)">{{ product.stock ? 'Tambah ke keranjang' : 'Sold out' }}</VBtn></div></VCardText></VCard></VCol></VRow>
+  <VCard v-if="!visible.length" class="text-center pa-10"><VIcon icon="ri-search-line" size="40" /><h3 class="text-h6 my-3">Produk tidak ditemukan</h3><VBtn variant="tonal" @click="reset">Hapus pencarian & filter</VBtn></VCard>
+  <VPagination v-if="visible.length" v-model="page" :length="pages" class="mt-6" :total-visible="4" />
+  <VDialog v-model="filtersOpen" max-width="460" aria-label="Product filters"><VCard tag="form" title="Filter produk" @submit.prevent="apply"><VCardText class="form-stack"><VSelect v-model="draft.category" :items="store.data.categories" item-title="name" item-value="id" label="Kategori" clearable /><VTextField v-model.number="draft.maxPrice" label="Harga maksimal (Rp)" type="number" min="0" clearable /><VSwitch v-model="draft.available" label="Hanya produk yang tersedia" /></VCardText><VCardActions class="pa-4"><VBtn color="secondary" @click="draft.category = null; draft.available = false; draft.maxPrice = null">Hapus pilihan</VBtn><VSpacer /><VBtn @click="filtersOpen = false">Batal</VBtn><VBtn type="submit" variant="flat">Terapkan filter</VBtn></VCardActions></VCard></VDialog><VSnackbar :model-value="!!snack" @update:model-value="snack = ''">{{ snack }}<template #actions><VBtn to="/shop/cart" variant="text">Lihat keranjang</VBtn><VBtn variant="text" @click="snack = ''">Tutup</VBtn></template></VSnackbar>
+</template>
